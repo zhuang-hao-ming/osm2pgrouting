@@ -358,31 +358,34 @@ void Export2DB::exportWays(const Ways &ways, const Configuration &config) const 
 
     Table table = this->ways();
 
-    auto columns = table.columns();
-    auto ways_columns = comma_separated(columns);
+    std::vector<std::string> columns = table.columns();
+    std::string ways_columns = comma_separated(columns);
 
     size_t chunck_size = m_vm["chunk"].as<size_t>();
 
-    auto create_sql = table.tmp_create();
-    auto temp_table(table.temp_name());
+    std::string create_sql = table.tmp_create();
+    std::string temp_table(table.temp_name());
 
-    std::string copy_sql( "COPY " + temp_table + " (" + comma_separated(columns) + ") FROM STDIN");
+    // 将标准输入的数据复制到临时表
+    
+    std::string copy_sql( "COPY " + temp_table + " (" + comma_separated(columns) + ") FROM STDIN"); 
 
 
     int64_t split_count = 0;
     int64_t count = 0;
     size_t start = 0;
-    auto it = ways.begin();
-
+    std::vector<Way>::iterator it = ways.begin();
+    
     while (start < ways.size()) {
+        // 一次处理CHUNK条Way,如果剩余的Way的数目小于CHUNK，一次性全部处理
         auto limit = (start + chunck_size) < ways.size() ? start + chunck_size : ways.size();
         try {
-            pqxx::connection db_con(conninf);
-            pqxx::work Xaction(db_con);
+            pqxx::connection db_con(conninf); // c++ api 连接对象
+            pqxx::work Xaction(db_con); // c++ api 事务对象
 
-            PGconn *mycon = PQconnectdb(conninf.c_str());
-            PGresult *res = PQexec(mycon, create_sql.c_str());
-            res = PQexec(mycon, copy_sql.c_str());
+            PGconn *mycon = PQconnectdb(conninf.c_str()); // c api 连接对象指针
+            PGresult *res = PQexec(mycon, create_sql.c_str()); // c api 执行建表sql
+            res = PQexec(mycon, copy_sql.c_str()); // c api 执行COPY sql
             if (res) {};
 
 
@@ -391,18 +394,20 @@ void Export2DB::exportWays(const Ways &ways, const Configuration &config) const 
 
                 ++count;
                 ++it;
+                
 
+                // Way的tag_config为空，即Way不是配置文件需求的Way，跳过当前Way
                 if (way.tag_config().key() == "" || way.tag_config().value() == "") continue;
 
                 std::vector<std::string> common_values;
-                common_values.push_back(TO_STR(config.tag_value(way.tag_config()).id()));
-                common_values.push_back(TO_STR(way.osm_id()));
-                common_values.push_back(way.maxspeed_forward_str() == "-1" ? TO_STR(config.maxspeed_forward(way.tag_config())) : way.maxspeed_forward_str()) ;
-                common_values.push_back(way.maxspeed_backward_str() == "-1" ? TO_STR(config.maxspeed_backward(way.tag_config())) : way.maxspeed_backward_str()) ;
-                common_values.push_back(way.oneWayType_str());
-                common_values.push_back(way.oneWay());
+                common_values.push_back(TO_STR(config.tag_value(way.tag_config()).id()));// tag_id
+                common_values.push_back(TO_STR(way.osm_id()));// osm_id
+                common_values.push_back(way.maxspeed_forward_str() == "-1" ? TO_STR(config.maxspeed_forward(way.tag_config())) : way.maxspeed_forward_str()) ; // maxspeed_forward
+                common_values.push_back(way.maxspeed_backward_str() == "-1" ? TO_STR(config.maxspeed_backward(way.tag_config())) : way.maxspeed_backward_str()) ; // maxspeed_backward
+                common_values.push_back(way.oneWayType_str()); // one_way
+                common_values.push_back(way.oneWay()); // oneway
                 // common_values.push_back(way.has_attribute("oneway") ? way.get_attribute("oneway") : std::string(""));
-                common_values.push_back(TO_STR(config.priority(way.tag_config())));
+                common_values.push_back(TO_STR(config.priority(way.tag_config()))); // priority
 
                 auto splits = way.split_me();
                 split_count +=  splits.size();
@@ -410,28 +415,28 @@ void Export2DB::exportWays(const Ways &ways, const Configuration &config) const 
                     auto length = way.length_str(splits[j]);
 
                     auto values = common_values;
-                    values.push_back(length);
-                    values.push_back(splits[j].front()->lon());
-                    values.push_back(splits[j].front()->lat());
-                    values.push_back(splits[j].back()->lon());
-                    values.push_back(splits[j].back()->lat());
-                    values.push_back(TO_STR(splits[j].front()->osm_id()));
-                    values.push_back(TO_STR(splits[j].back()->osm_id()));
-                    values.push_back(way.geometry_str(splits[j]));
+                    values.push_back(length); // length
+                    values.push_back(splits[j].front()->lon()); // x1
+                    values.push_back(splits[j].front()->lat()); // y1
+                    values.push_back(splits[j].back()->lon()); // x2
+                    values.push_back(splits[j].back()->lat()); // y2
+                    values.push_back(TO_STR(splits[j].front()->osm_id())); // source_osm
+                    values.push_back(TO_STR(splits[j].back()->osm_id())); // target_osm
+                    values.push_back(way.geometry_str(splits[j])); // the_geom
 
                     // cost based on oneway
-                    if (way.is_reversed())
-                        values.push_back(std::string("-") + length);
+                    if (way.is_reversed()) // 逆向， 道路的行驶方向和线的方向相反？？？没有能够体现逆向可通行
+                        values.push_back(std::string("-") + length); // cost
                     else
                         values.push_back(length);
 
                     // reverse_cost
-                    if (way.is_oneway())
-                        values.push_back(std::string("-") + length);
+                    if (way.is_oneway()) // if(way.is_oneway() && way.is_reversed()) values.push_back(length);
+                        values.push_back(std::string("-") + length); //reverse_cost
                     else
                         values.push_back(length);
 
-                    values.push_back(way.name());
+                    values.push_back(way.name()); // name
                     PQputline(mycon, tab_separated(values).c_str());
                 }
             }
@@ -459,13 +464,15 @@ void Export2DB::process_section(const std::string &ways_columns, pqxx::work &Xac
     //  std::cout << "Creating indices in temporary table\n";
     auto temp_table(ways().temp_name());
 
+    // 在临时表上建立索引
+
     Xaction.exec("CREATE INDEX "+ temp_table + "_gdx ON "+ temp_table + " using gist(the_geom);");
     Xaction.exec("CREATE INDEX ON "+ temp_table + "  USING btree (source_osm)");
     Xaction.exec("CREATE INDEX ON "+ temp_table + "  USING btree (target_osm)");
 
 
 
-
+    // 增量修改， 删除在数据表中已经有的行， ？？ 几何相同属性不同未考虑到
     //  std::cout << "Deleting  duplicated ways FROM temporary table\n";
     std::string delete_from_temp(
             " DELETE FROM "+ temp_table + " a "

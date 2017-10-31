@@ -134,7 +134,7 @@ class Export2DB {
 
      Table configuration() const {return m_tables.configuration();}
      Table vertices() const {return m_tables.vertices();}
-     Table ways() const {return m_tables.ways();}
+     Table ways() const {return m_tables.ways();} // ways()代理到Tables的ways()从Tables中获得ways Table
      Table pois() const {return m_tables.pois();}
      Table osm_ways() const {return m_tables.osm_ways();}
      Table osm_nodes() const {return m_tables.osm_nodes();}

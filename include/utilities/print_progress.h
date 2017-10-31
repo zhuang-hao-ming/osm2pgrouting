@@ -26,6 +26,9 @@
 #include <iostream>
 #include <string>
 
+/*
+    [***************||||||||||||||||||](50%)  Total processed: 156165
+*/
 template < typename T1 , typename T2>
 void
 print_progress(T1 wantProgress, T2 currentProgress) {

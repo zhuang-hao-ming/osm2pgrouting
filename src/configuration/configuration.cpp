@@ -54,13 +54,19 @@ Configuration::tag_value(const Tag &tag) const {
     return tag_key(tag).tag_value(tag);
 }                      
 
-
+/*
+    <tag k="k" v="v" />
+    从 tag_key的map中获得对应的tag_key
+*/
 const Tag_key& 
 Configuration::tag_key(const Tag &tag) const {
     return m_Tag_keys.at(tag.key()); 
 }                      
 
-
+/*
+    如果tag对应的tag_key有maxspeed这个attribute返回
+    否则返回50
+*/
 double
 Configuration::maxspeed(const Tag &tag) const {
     if (tag_key(tag).has(tag, "maxspeed"))
@@ -75,6 +81,11 @@ Configuration::maxspeed_forward(const Tag &tag) const {
     return maxspeed(tag);
 }
 
+/*
+获得tag对应的tag_key，
+如果tag对应的tag_value有要的属性，从tag_value获得否则从tag_key获得
+
+*/
 double
 Configuration::maxspeed_backward(const Tag &tag) const {
     if (tag_key(tag).has(tag, "maxspeed:forward"))

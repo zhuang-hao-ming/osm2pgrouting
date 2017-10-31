@@ -41,6 +41,13 @@ Tag_key::has_tag_value(const Tag &tag) const {
     return m_Tag_values.count(tag.value());
 }
 
+/*
+    从tag_value的map中获得对应的tag_value
+    {
+        "motorway":   xxx,
+        "primary": xxx,
+    }
+*/
 const
 Tag_value&
 Tag_key::tag_value(
@@ -48,12 +55,16 @@ Tag_key::tag_value(
     return m_Tag_values.at(tag.value());
 }
 
+
 bool
 Tag_key::has(const Tag &tag, const std::string &str) const {
     return tag_value(tag).has_attribute(str)
            || this->has_attribute(str);
 }
 
+/*
+
+*/
 std::string
 Tag_key::get(const Tag &tag, const std::string &str) const {
     assert(this->has(tag, str));

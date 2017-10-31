@@ -21,17 +21,24 @@
 #include <vector>
 
 
-
+/**
+*  ["a","b","c"] => " a,b,c "
+*/
 std::string 
 comma_separated(const std::vector<std::string> &columns) {
     std::string result(" ");
     for (auto column: columns) {
         result += column + ",";
     }                       
-    result[result.size() - 1] = ' '; 
+    result[result.size() - 1] = ' '; // 一个好的将数组转化为逗号分割字符串的思路，将最后一个逗号替换为空白
     return result;
 }
 
+/*
+ \N是NULL的替代符号
+
+ 生成符号分割字符串的好思路 again！
+*/
 std::string 
 tab_separated(const std::vector<std::string> &columns) {
     std::string result(" ");

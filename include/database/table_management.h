@@ -100,7 +100,13 @@ class Table {
 
 
 
-
+/**
+    Tables的数据成员：
+    ways Table
+    Tables的成员函数：
+    内部辅助函数用于构建相应的Table
+    取回相应Table的函数
+*/
 class Tables {
     public:
         Tables(const po::variables_map &vm);

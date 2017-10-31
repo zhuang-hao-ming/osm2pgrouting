@@ -48,7 +48,10 @@ Node::tag_config(const Tag &tag) {
     ++m_numsOfUse;
 }
 
-
+/**
+    返回两个Node之间的欧氏距离
+    Node的lat和lon是Node的attribute
+*/
 double
 Node::getLength(const Node &previous) const {
     auto y1 = boost::lexical_cast<double>(get_attribute("lat"));

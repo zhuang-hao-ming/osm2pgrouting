@@ -68,6 +68,7 @@ class Node : public Element {
      explicit Node(const char **atts);
      ~Node() {};
 
+     // "123 23"
      inline std::string geom_str(const std::string separator) const {
          return get_attribute("lon") + separator +  get_attribute("lat");
      }

@@ -27,7 +27,11 @@
 
 namespace osm2pgr {
 
-
+/*
+    数据成员：
+        tag map
+        attribute map
+*/
 Element::Element(const char **atts) :
     m_visible(true) {
         auto **attribut = atts;

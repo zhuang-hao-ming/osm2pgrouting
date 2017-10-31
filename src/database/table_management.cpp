@@ -26,6 +26,13 @@
 
 namespace osm2pgr {
 
+/**
+* Table类的数据成员：
+* 表名，schema名，加了prefix和suffix的完整表名，主要的列声明字符串，补充的列声明字符串，几何字段名字 
+* 
+* 函数成员：
+*   
+*/
 Table::Table(
         const std::string &name,
         const std::string &schema,
@@ -130,7 +137,10 @@ Table::drop() const {
     return "DROP TABLE IF EXISTS " + addSchema() + ";";
 }
 
-
+/*
+获得临时表名，
+__schema.prefixnamesuffix156
+*/
 std::string
 Table::temp_name() const {
     return
@@ -139,15 +149,21 @@ Table::temp_name() const {
         + boost::lexical_cast<std::string>(getpid());
 }
 
+/**
+    返回创建临时表的sql字符串。
 
+    unlogged table，unlogged table的数据和索引不会被写到
+    write-ahead log中也不会被复制到备份服务器，
+    所以它的写速度比一般的表快很多，但是如果服务器奔溃，数据会被清除。
+*/
 std::string
 Table::tmp_create() const {
     std::string sql =
         "CREATE UNLOGGED TABLE " 
         + temp_name()
         + " ("
-        + m_create
-        + m_other_columns
+        + m_create // 主要列声明字符串
+        + m_other_columns // 次要列声明字符串
         + ");";
     if (m_geometry != "") {
         sql += "SELECT AddGeometryColumn('"

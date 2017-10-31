@@ -75,7 +75,11 @@ Way::length_str() const {
     return length_str(m_NodeRefs);
 }
 
-
+/*
+返回Way的WKT
+"srid=4326;LINESTRING(123 23, 124 24, "
+"srid=4326;LINESTRING(123 23, 124 24) "
+*/
 std::string
 Way::geometry_str(const std::vector<Node*> &nodeRefs) const {
     if (nodeRefs.size() < 2) return "srid=4326;LINESTRING EMPTY";
@@ -94,13 +98,16 @@ Way::geometry_str(const std::vector<Node*> &nodeRefs) const {
     return geometry;
 }
 
-
+/**
+    返回Way的长度
+    计算组成Way的Node之间的欧氏距离的累加和
+*/
 std::string
 Way::length_str(const std::vector<Node*> &nodeRefs) const {
     double length = 0;
-    auto prev_node_ptr = nodeRefs.front();
+    auto prev_node_ptr = nodeRefs.front(); // 把第一个Node设置为pre的初始值
 
-    for (auto it = nodeRefs.begin();
+    for (auto it = nodeRefs.begin(); // 但是遍历仍然从第一个Node开始，因为两个相同Node之间的距离为0，并不影响语义
             it != nodeRefs.end();
             ++it) {
         auto node_ptr = *it;
